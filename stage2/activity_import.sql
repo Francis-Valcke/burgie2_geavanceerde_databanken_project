@@ -22,7 +22,7 @@ begin
 			activity.tourist_region as tourist_region,
 			activity.activity_type as activity_type,
 			activity.accessibility_label as accessibility_label,
--- 			activity.last_modified as last_modified,
+   			activity.last_modified as validity_start,
 			-- 	auditive_disability_information
 			auditive_disability_information.hearing_impaired_details,
 			case when (auditive_disability_information.hearing_impaired is NULL) or (auditive_disability_information.hearing_impaired = 0) then false else true end as hearing_impaired,
@@ -66,7 +66,7 @@ begin
 			tourist_region,
 			activity_type,
 			accessibility_label,
--- 			last_modified,
+ 			validity_start,
 			-- 	auditive_disability_information
 			hearing_impaired_details,
 			hearing_impaired,
@@ -102,7 +102,7 @@ begin
 			activity_row.tourist_region,
 			activity_row.activity_type,
 			activity_row.accessibility_label,
--- 			activity_row.last_modified,
+ 			activity_row.validity_start,
 			-- 	auditive_disability_information
 			activity_row.hearing_impaired_details,
 			activity_row.hearing_impaired,
