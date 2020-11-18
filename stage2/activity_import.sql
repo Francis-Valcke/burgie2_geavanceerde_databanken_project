@@ -5,6 +5,9 @@ declare
 
 begin
 	set search_path to tourism1;
+	
+	delete from public.activity;
+	
 	for activity_row in (
 		select 
 			-- 	activity
