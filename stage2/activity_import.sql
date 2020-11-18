@@ -28,7 +28,6 @@ begin
 			case when (auditive_disability_information.hearing_impaired is NULL) or (auditive_disability_information.hearing_impaired = 0) then false else true end as hearing_impaired,
 			auditive_disability_information.deaf_details,
 			case when (auditive_disability_information.deaf is NULL) or (auditive_disability_information.deaf = 0) then false else true end as deaf,
-
 			-- 	visual_disability_information
 			visual_disability_information.blind_details,
 			case when (visual_disability_information.blind is NULL) or (visual_disability_information.blind = 0) then false else true end as blind,

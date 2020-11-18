@@ -81,7 +81,6 @@ begin
  		) on conflict do nothing;
 
 		-- 		insert entry in activity_opening_hours and return new assigned id
-		
 		insert into public.activity_opening_hours(
 			start_time_id,
 			end_time_id,
@@ -94,7 +93,6 @@ begin
 		) returning activity_opening_hours_id into sub_record;
 		
 		-- 		use new id to fill in the bridge table
-		
 		insert into public.activity_activity_opening_hours_bridge(
  			activity_id,
  			activity_opening_hours_id
