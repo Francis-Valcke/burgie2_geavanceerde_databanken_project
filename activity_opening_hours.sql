@@ -2,6 +2,7 @@ do $$
 declare
 
 	record record;
+	sub_record record;
 	iterator bigint := 0;
 
 begin
@@ -79,20 +80,30 @@ begin
 			record.end_time_epoch
  		) on conflict do nothing;
 
-		-- 		entry in activity_opening_hours
+		-- 		insert entry in activity_opening_hours and return new assigned id
+		
 		insert into public.activity_opening_hours(
 			start_time_id,
 			end_time_id,
 			duration_in_minutes
- 		)
- 		values (
+		)
+		values (
 			record.start_time_epoch,
 			record.end_time_epoch,
 			record.duration_in_minutes
- 		); returning activity_opening_hours_id;
-		raise notice 'test %', activity_opening_hours_id;
+		) returning activity_opening_hours_id into sub_record;
 		
+		-- 		use new id to fill in the bridge table
 		
+		insert into public.activity_activity_opening_hours_bridge(
+ 			activity_id,
+ 			activity_opening_hours_id
+ 		)
+ 		values (
+ 			record.activity_id,
+ 			sub_record.activity_opening_hours_id
+ 		);
+
 	end loop;
 end;
 $$ language plpgsql;
