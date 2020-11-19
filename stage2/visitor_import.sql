@@ -6,11 +6,15 @@ declare
 	scd1_change integer := 0;
 	scd2_change integer := 0;
 	row_inserts integer := 0;
-	total_rows integer := 0;
+	total_rows_before_insert integer := 0;
+	total_rows_after_insert integer := 0;
+	total_rows_after_delete integer := 0;
 	deleted_rows integer := 0;
 
 begin
-	set search_path to tourism1;
+	select count(*) from public.visitor into total_rows_before_insert;
+
+	set search_path to tourism2;
 	
 -- 	delete from public.visitor;
 	
@@ -117,11 +121,12 @@ begin
 		row_inserts := row_inserts + 1;
 		
 	end loop;
-
-		
 	
-	-- duplicate entries will exist, check SCD II attributes if we have a new version or not
-	-- keep the most recent one, in that case, the SCD I values will be updated indirectly
+	raise notice 'scd1_updates: %', scd1_change;
+	raise notice 'row_inserts: %', row_inserts;
+	select count(*) from public.visitor into total_rows_after_insert;
+
+	-- look for changed scd2 attributes as to decide wether to keep or delete the newly added version
 	with comparison_last as (
 		select 
 			visitor_id,
@@ -141,7 +146,7 @@ begin
 		window w as (partition by visitor_id order by validity_start)
 	),
 	
-	-- search 'duplicate' rows considering address
+	-- search for duplicate rows
 	remove_versions as (
 		select 
 			visitor_id, 
@@ -155,7 +160,7 @@ begin
 			address_street_name is not distinct from last_street_name
 	),		
 	
-	-- deletion
+	-- delete duplicate rows
 	deleted_rows as (
 		delete from public.visitor
 	 	where (
@@ -164,17 +169,10 @@ begin
 		) in (select * from remove_versions) returning *
 	)
 
-
-	-- debug
-	raise notice 'scd1_updates: %',scd1_change;
-	raise notice 'row_inserts: %', row_inserts;
 	select count(*) from deleted_rows into deleted_rows; 
- 	raise notice 'Deleted rows: %', deleted_rows;
-	select count(*) from public.visitor into total_rows;
-	raise notice 'total_rows: %', total_rows;
-
+  	raise notice 'Deleted rows: %', deleted_rows;
+	
 	-- update validity_end
-	-- last condition in where clause makes sure we update the correct row regarding the lead function
 	update 
 		public.visitor v
 	set 
@@ -191,7 +189,11 @@ begin
 	where 
 		newv.visitor_id = v.visitor_id and newv.validity_start = v.validity_start;
 		
+	select count(*) from public.visitor into total_rows_after_delete;
 	
+	raise notice 'total_rows_before_insert: %', total_rows_before_insert;
+	raise notice 'total_rows_after_insert: %', total_rows_after_insert;
+	raise notice 'total_rows_after_delete: %', total_rows_after_delete;
 	
 end;
 $$ language plpgsql;
