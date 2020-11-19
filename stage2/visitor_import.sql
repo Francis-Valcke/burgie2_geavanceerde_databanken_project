@@ -12,10 +12,11 @@ declare
 	deleted_rows integer := 0;
 
 begin
-	select count(*) from public.visitor into total_rows_before_insert;
 
 	set search_path to tourism2;
-	
+
+
+	select count(*) from public.visitor into total_rows_before_insert;
 -- 	delete from public.visitor;
 	
 	for record in (
