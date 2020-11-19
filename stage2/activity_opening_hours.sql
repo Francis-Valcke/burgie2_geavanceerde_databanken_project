@@ -7,9 +7,6 @@ declare
 
 begin
 	set search_path to tourism1;
-	
-	delete from public.activity_opening_hours;
-	delete from public.activity_activity_opening_hours_bridge;
 
 	for record in (
 		with temp_table as(
