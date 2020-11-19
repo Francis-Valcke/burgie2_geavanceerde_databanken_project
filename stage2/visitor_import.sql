@@ -3,6 +3,7 @@ declare
 
 	record record;
 	now timestamp := current_timestamp;
+	scd1_change integer := 0;
 	scd2_change integer := 0;
 
 begin
@@ -46,7 +47,7 @@ begin
 			from
 				visitor
 			where
-				public.visitor.visitor_id = record.visitor_id
+				visitor_id = record.visitor_id
 		)
 		then
 			update 
@@ -54,152 +55,58 @@ begin
 			set 
 				email_address = record.email_address,
 				firstname = record.firstname,
-				surname = record.surname,
-				birthdate = record.birthdate
+				surname = record.surname
+-- 				birthdate_time_id = record.birthdate
 			where 
-				visitor_natural_key = visitor_row.visitor_natural_key;
+				visitor_id = record.visitor_id;
+				
+			scd1_change := scd1_change + 1;
 		end if;
+		
+		
+		
+		
+		
 		
 		-- Add new row in case a SCD2 attribute of the most recent entry has changed
 		if exists (
-			select 
-				visitor_id,
-				validity_start, 
+			with temp_table as (
+				select 
+					visitor_id,
+					validity_start, 
 
-				address_zipcode, 
-				address_housenumber, 
-				address_municipality, 
-				address_street, 
-				lag(address_zipcode) over w as previous_zipcode,
-				lag(address_housenumber) over w as previous_housenumber,
-				lag(address_municipality) over w as previous_municipality,
-				lag(address_street) over w as previous_street_name
+					lag(address_zipcode) over w as last_zipcode,
+					lag(address_housenumber) over w as last_housenumber,
+					lag(address_municipality) over w as last_municipality,
+					lag(address_street_name) over w as last_street_name
 
-			from 
-				public.visitor
-			window w as (partition by visitor_id order by validity_start)
+				from 
+					public.visitor
+				window w as (partition by visitor_id order by validity_start)
+			)
+			select
+				*
+			from
+				temp_table
 			where
 				visitor_id = record.visitor_id
 				and (
 					not (
-						previous_zipcode = record.zipcode
-						and previous_municipality = record.municipality
-						and previous_street_name = record.street_name
-						and previous_housenumber  = record.housenumber
+						last_zipcode = record.zipcode
+						and last_municipality = record.municipality
+						and last_street_name = record.street_name
+						and last_housenumber  = record.housenumber
 					)
 				)
 		)
 		then
-			scd2_change := scd2_change + 1
+			scd2_change := scd2_change + 1;
 		end if;
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		-- if a changed scd 2 attribute exists, then create a new entry
-		if exists (
-			select
-				visitor_id
-			from
-				visitor
-			where
-				public.visitor.visitor_id = record.visitor_id
--- 				and (
--- 					not (
--- 						public.visitor.address_zipcode = record.zipcode
--- 						and public.visitor.address_municipality = record.municipality
--- 						and public.visitor.address_street_name =record.street_name
--- 						and public.visitor.address_housenumber  = record.housenumber
--- 					)
--- 				)
-		)
-		then
-			-- the record does exist, check if any scd2 variables were violated
-			if exists (
-				select
-					visitor_id
-				from
-					visitor
-				where
-					public.visitor.visitor_id = record.visitor_id
-					and (
-						not (
-							public.visitor.address_zipcode = record.zipcode
-							and public.visitor.address_municipality = record.municipality
-							and public.visitor.address_street_name =record.street_name
-							and public.visitor.address_housenumber  = record.housenumber
-						)
-					)
-			)
-			then
-				-- there changes to scd2 attributes were detected so a new entry needs to be made
-			
-			else
-				-- it is fine to update the current record
-			
-			end if;
-			
-			
-			
-		else
-			-- the record does not exist yet, so just create one
-			
-			
-		end if;
-		
-		
-		
-		-- 		time_dimension_entry
- 		insert into public.time_dimension(
-			year,
-			month,
-			day,
-			hour,
-			minute,
-			second,
-			epoch
- 		)
- 		values (
-			record.birthdate_year,
-			record.birthdate_month,
-			record.birthdate_day,
-			record.birthdate_hour,
-			record.birthdate_minute,
-			record.birthdate_second,
-			record.birthdate_epoch
- 		) on conflict do nothing;
-		
-		--		visitor_entry
-		insert into public.visitor(
-			visitor_id,
-			firstname,
-			surname,
-			email_address,
-			address_zipcode,
-			address_housenumber,
-			address_municipality,
-			address_street_name,
-			birthdate_time_id
-		)
-		values (
-			record.visitor_id,
-			record.firstname,
-			record.surname,
-			record.email_address,
-			record.zipcode,
-			record.housenumber,
-			record.municipality,
-			record.street_name,
-			record.birthdate_epoch
-		);
 	end loop;
+	
+	raise notice 'scd1_updates: %',scd2_change;
+	raise notice 'scd2_updates: %',scd2_change;
+	
 end;
 $$ language plpgsql;
