@@ -2,6 +2,8 @@ do $$
 declare
 
 	record record;
+	corrected_activity_id bigint := 0;
+	corrected_visitor_id bigint := 0;
 
 begin
 	set search_path to tourism1;
@@ -73,6 +75,22 @@ begin
 			record.booking_period_start_epoch
  		) on conflict do nothing;
 		
+		-- Now we need to translate the visitor and activity id into the most recent version surrogates
+		select
+			lag(activity_id_surrogate) over (partition by activity_id order by validity_start)
+		from
+			public.activity
+		where
+			record.activity_id = activity_id
+		into corrected_activity_id;
+		
+		select
+			lag(visitor_id_surrogate) over (partition by visitor_id order by validity_start)
+		from
+			public.visitor
+		where
+			record.visitor_id = visitor_id
+		into corrected_visitor_id;
 		
 		--		reservation_entry
 		insert into public.reservation(
@@ -83,8 +101,8 @@ begin
 			attendees
 		)
 		values (
-			record.activity_id,
-			record.visitor_id,
+			corrected_activity_id,
+			corrected_visitor_id,
 			record.booking_period_start_epoch,
 			record.booking_time_epoch,
 			record.attendees
