@@ -74,6 +74,67 @@ do $$
 		-- TODO
 		end if;
 		end loop;
+
+		-- Get comparison of two consecutive versions of a car
+		with comparison as (
+			select 
+				car_natural_key, 
+				version_start, 
+				car_age_in_months, 
+				lag(car_age_in_months) over w as prev_age,
+				model_price_per_day, lag(model_price_per_day) over w as prev_ppd, 
+				model_price_per_week,
+				lag(model_price_per_week) over w as prev_ppw
+			from 
+				public.dimension_car
+			window w as (partition by car_natural_key order by version_start)
+		),
+
+		-- Mark them as removable if they are the same on the SCD type II attributes
+		versions_to_remove as (
+			select 
+				car_natural_key, 
+				version_start 
+			from 
+				comparison
+			where
+				car_age_in_months is not distinct from prev_age and
+				model_price_per_day is not distinct from prev_ppd and
+				model_price_per_week is not distinct from prev_ppw
+		),
+
+		-- Effectively delete them
+		deleted as (
+			delete from public.dimension_car 
+			where (car_natural_key, version_start) in (select * from versions_to_remove) returning *
+		)
+
+		--Set version_ends
+		update 
+			public.dimension_car dd 
+		set 
+			version_end = d.version_end 
+		from(
+			select 
+				car_natural_key, 
+				version_start, 
+				lead(version_start) over natural_key_partition as version_end
+			from 
+				public.dimension_car
+			window natural_key_partition as (partition by car_natural_key order by version_start)
+			order by car_natural_key, version_start asc
+		) d
+		where 
+			d.car_natural_key = dd.car_natural_key and d.version_start = dd.version_start;
+
+		--Reset last version
+		update public.dimension_car set last_version = false;
+
+
+		--Correctly set last version
+		update public.dimension_car set last_version = true where version_end is null;
+
+
 	end;
 	
 $$ language plpgsql;
