@@ -8,7 +8,15 @@ declare
 	opening_hours_id bigint := 0;
 
 begin
-	set search_path to tourism1;
+	set search_path to tourism2;
+	
+	drop table if exists temp_bridge;
+	
+	CREATE TEMP TABLE temp_bridge (
+   		activity_id bigint,
+		activity_opening_hours_id bigint
+	);
+	
 
 	for record in (
 		with temp_table as(
@@ -39,6 +47,7 @@ begin
 			temp_table
 	)
 	loop
+
 		-- 		start_time
  		insert into public.time_dimension(
 			year,
@@ -104,8 +113,15 @@ begin
 			record.activity_id = activity_id
 		into corrected_activity_id;
 		
-		-- 		use new id to fill in the bridge table
-		insert into public.activity_activity_opening_hours_bridge(
+		
+		-- Check if the actual bridge table already contains values for that surrogate key, in that case drop them all
+		
+		delete from public.activity_activity_opening_hours_bridge
+		where activity_id = corrected_activity_id;
+		
+		
+		-- 		use new id to fill in the temporary new bridge table
+		insert into temp_bridge(
  			activity_id,
  			activity_opening_hours_id
  		)
@@ -115,5 +131,25 @@ begin
  		);
 
 	end loop;
+	
+	
+	for record in (
+		select * 
+		from temp_bridge
+	)
+	loop
+		
+		-- 		use new id to fill in the temporary new bridge table
+		insert into public.activity_activity_opening_hours_bridge(
+ 			activity_id,
+ 			activity_opening_hours_id
+ 		)
+ 		values (
+ 			record.activity_id,
+ 			record.activity_opening_hours_id
+ 		);
+		
+	end loop;
+	
 end;
 $$ language plpgsql;
