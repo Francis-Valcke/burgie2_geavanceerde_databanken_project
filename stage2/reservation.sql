@@ -77,20 +77,28 @@ begin
 		
 		-- Now we need to translate the visitor and activity id into the most recent version surrogates
 		select
-			lag(activity_id_surrogate) over (partition by activity_id order by validity_start)
+			last_value(activity_id_surrogate) over (partition by activity_id order by validity_start 
+			RANGE BETWEEN
+            UNBOUNDED PRECEDING AND
+            UNBOUNDED FOLLOWING)
 		from
 			public.activity
 		where
 			record.activity_id = activity_id
 		into corrected_activity_id;
 		
+		
 		select
-			lag(visitor_id_surrogate) over (partition by visitor_id order by validity_start)
+			last_value(visitor_id_surrogate) over (partition by visitor_id order by validity_start 
+			RANGE BETWEEN
+            UNBOUNDED PRECEDING AND
+            UNBOUNDED FOLLOWING)
 		from
 			public.visitor
 		where
 			record.visitor_id = visitor_id
 		into corrected_visitor_id;
+		
 		
 		--		reservation_entry
 		insert into public.reservation(

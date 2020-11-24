@@ -13,7 +13,7 @@ declare
 
 begin
 
-	set search_path to tourism2;
+	set search_path to tourism1;
 
 
 	select count(*) from public.visitor into total_rows_before_insert;

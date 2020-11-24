@@ -4,6 +4,8 @@ declare
 	record record;
 	sub_record record;
 	iterator bigint := 0;
+	corrected_activity_id bigint := 0;
+	opening_hours_id bigint := 0;
 
 begin
 	set search_path to tourism1;
@@ -87,7 +89,20 @@ begin
 			record.start_time_epoch,
 			record.end_time_epoch,
 			record.duration_in_minutes
-		) returning activity_opening_hours_id into sub_record;
+		) returning activity_opening_hours_id into opening_hours_id;
+
+		-- 		Translate the activity id to activity surrogate id
+		select
+			last_value(activity_id_surrogate) over (partition by activity_id order by validity_start 
+													RANGE BETWEEN
+														UNBOUNDED PRECEDING AND
+														UNBOUNDED FOLLOWING
+												   )
+		from
+			public.activity
+		where
+			record.activity_id = activity_id
+		into corrected_activity_id;
 		
 		-- 		use new id to fill in the bridge table
 		insert into public.activity_activity_opening_hours_bridge(
@@ -95,8 +110,8 @@ begin
  			activity_opening_hours_id
  		)
  		values (
- 			record.activity_id,
- 			sub_record.activity_opening_hours_id
+ 			corrected_activity_id,
+ 			opening_hours_id
  		);
 
 	end loop;

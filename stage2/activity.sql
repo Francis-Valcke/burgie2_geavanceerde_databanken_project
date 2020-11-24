@@ -12,7 +12,7 @@ declare
 	deleted_rows integer := 0;
 
 begin
-	set search_path to tourism2;
+	set search_path to tourism1;
 		
 	select count(*) from public.activity into total_rows_before_insert;
 	for record in (
@@ -151,6 +151,25 @@ begin
 			record.address_housenumber,
 			record.address_zipcode
 		);
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	end loop;
 	
 	
