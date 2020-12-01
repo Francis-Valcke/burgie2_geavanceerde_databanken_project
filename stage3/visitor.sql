@@ -14,6 +14,7 @@ begin
 		where 
 			not cast(address_zipcode as text) ~ '^[1-9]{1}[0-9]{3}$'
 			or cast(address_zipcode as text) like ''
+			or cast(address_housenumber as text) ~ '^0'
 			or address_zipcode is null
 	)	
 	loop
@@ -27,6 +28,7 @@ begin
 		where 
 			not cast(address_housenumber as text) ~ '^\d+[a-zA-Z]*$'
 			or cast(address_housenumber as text) like ''
+			or cast(address_housenumber as text) ~ '^0'
 			or address_zipcode is null
 	)	
 	loop
