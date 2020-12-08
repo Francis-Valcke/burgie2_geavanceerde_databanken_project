@@ -108,6 +108,70 @@ begin
 		raise notice 'Activity_id = %:  food_allergy = %, allergy = %', record.activity_id, record.food_allergy_bool, record.allergy_bool;
 	end loop;
 	
+	for record in (
+		select *
+		from activity_full
+		where not (allergy_details is NULL or allergy_details like '') and allergy_bool = false
+	) loop
+		raise notice 'Activity_id = %:  allergy_details = %, allergy_bool = %', record.activity_id, record.allergy_details, record.allergy_bool;
+	end loop;
+	
+	for record in (
+		select *
+		from activity_full
+		where not (deaf_details is NULL or deaf_details like '') and deaf_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  deaf_details = %, deaf_bool = %', record.activity_id, record.deaf_details, record.deaf_bool;
+	end loop;
+	
+	for record in (
+		select *
+		from activity_full
+		where not (hearing_impaired_details is NULL or hearing_impaired_details like '') and hearing_impaired_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  hearing_impaired_details = %, hearing_impaired_bool = %', record.activity_id, record.hearing_impaired_details, record.hearing_impaired_bool;
+	end loop;	
+	
+	for record in (
+		select *
+		from activity_full
+		where not (autism_details is NULL or autism_details like '') and autism_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  autism_details = %, autism_bool = %', record.activity_id, record.autism_details, record.autism_bool;
+	end loop;	
+	
+	for record in (
+		select *
+		from activity_full
+		where not (mental_disability_details is NULL or mental_disability_details like '') and mental_disability_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  mental_disability_details = %, mental_disability_bool = %', record.activity_id, record.mental_disability_details, record.mental_disability_bool;
+	end loop;	
+	
+	for record in (
+		select *
+		from activity_full
+		where not (blind_details is NULL or blind_details like '') and blind_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  blind_details = %, blind_bool = %', record.activity_id, record.blind_details, record.blind_bool;
+	end loop;		
+	
+	
+	for record in (
+		select *
+		from activity_full
+		where not (visually_impaired_details is NULL or visually_impaired_details like '') and visually_impaired_bool = false	
+	) 
+	loop
+		raise notice 'Activity_id = %:  visually_impaired_details = %, blind_bool = %', record.activity_id, record.visually_impaired_details, record.visually_impaired_bool;
+	end loop;	
+
+	
 	drop table if exists activity_full;
 end;
 $$ language plpgsql;
