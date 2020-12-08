@@ -9,7 +9,7 @@ begin
 	--  First make a join table to perform queries on
 	
 	drop table if exists activity_full;
-	create temporary table activity_full as (
+	create temporary table activity_full on commit drop as (
 		select 
 			activity.activity_id,
 		
