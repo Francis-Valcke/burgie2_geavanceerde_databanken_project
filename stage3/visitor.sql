@@ -2,10 +2,15 @@ do $$
 declare
 
 	record record;
+	
+	count_housenumber int := 0;
+	count_street_number int := 0;
+	count_zipcode int := 0;
+	count_municipality int := 0;
 
 begin
 
-	set search_path to tourism1;
+	set search_path to tourism2;
 	
 	create temporary table visitor_full on commit drop as (
 		select 
@@ -31,6 +36,7 @@ begin
 	)	
 	loop
 		raise notice 'visitor_id = %: Inconsistant zipcode = %', record.visitor_id, record.zipcode;
+		count_zipcode=count_zipcode+1;
 	end loop;
 	
 	-- Housenr regex check
@@ -45,6 +51,7 @@ begin
 	)	
 	loop
 		raise notice 'visitor_ide = %: Inconsistant housenumber = %', record.visitor_id, record.housenumber;
+		count_housenumber=count_housenumber+1;
 	end loop;
 	
 	-- Municiplaity regex check
@@ -58,6 +65,7 @@ begin
 	)	
 	loop
 		raise notice 'visitor_id = %: Inconsistant municipality = %', record.visitor_id, record.municipality;
+		count_municipality=count_municipality+1;
 	end loop;
 	
 	-- street_name regex check
@@ -71,6 +79,7 @@ begin
 	)	
 	loop
 		raise notice 'visitor_id = %: Inconsistant street_name = %', record.visitor_id, record.street_name;
+		count_street_number=count_street_number+1;
 	end loop;
 	
 	-- City with wrong zipcode
@@ -83,6 +92,12 @@ begin
 --  	loop
 --  		raise notice 'visitor_id = %: Inconsistant zipcode = % for city = % should be zipcode = %', record.visitor_id, record.zipcode, record.municipality, record.zipcode;
 --  	end loop;
-
+	
+	raise notice '';
+	-- Print stats	
+	raise notice 'count_housenumber = %', count_housenumber;
+	raise notice 'count_street_number = %', count_street_number;
+	raise notice 'count_zipcode = %', count_zipcode;
+	raise notice 'count_municipality = %', count_municipality;
 end;
 $$ language plpgsql;

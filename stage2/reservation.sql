@@ -2,8 +2,14 @@ do $$
 declare
 
 	record record;
+	record2 record;
+
 	corrected_activity_id bigint := 0;
 	corrected_visitor_id bigint := 0;
+	zipcode_from int := 0;
+	zipcode_to int := 0;
+	activity_type VARCHAR;
+
 
 begin
 	set search_path to tourism1;
@@ -31,6 +37,11 @@ begin
 			extract(second from reservation.booking_time) as booking_time_second,
 			extract(epoch from reservation.booking_time) as booking_time_epoch,
 			reservation.attendees
+
+
+
+
+
 		from reservation
 	) 
 	loop
@@ -80,25 +91,34 @@ begin
 			last_value(activity_id_surrogate) over (partition by activity_id order by validity_start 
 			RANGE BETWEEN
             UNBOUNDED PRECEDING AND
-            UNBOUNDED FOLLOWING)
+            UNBOUNDED FOLLOWING) as activity_id_surrogate,
+			address_zipcode,
+			activity.activity_type
+
 		from
 			public.activity
 		where
 			record.activity_id = activity_id
-		into corrected_activity_id;
+		into record2;
 		
+		corrected_activity_id = record2.activity_id_surrogate;
+		activity_type = record2.activity_type;
+		zipcode_to = record2.address_zipcode;
 		
 		select
 			last_value(visitor_id_surrogate) over (partition by visitor_id order by validity_start 
 			RANGE BETWEEN
             UNBOUNDED PRECEDING AND
-            UNBOUNDED FOLLOWING)
+            UNBOUNDED FOLLOWING) as visitor_id_surrogate,
+			address_zipcode
 		from
 			public.visitor
 		where
 			record.visitor_id = visitor_id
-		into corrected_visitor_id;
+		into record2;
 		
+		corrected_visitor_id = record2.visitor_id_surrogate;
+		zipcode_from = record2.address_zipcode;
 		
 		--		reservation_entry
 		insert into public.reservation(
@@ -106,14 +126,20 @@ begin
 			visitor_id,
 			booking_start_time_id,
 			booking_time_id,
-			attendees
+			attendees,
+			zipcode_from,
+			zipcode_to,
+			activity_type
 		)
 		values (
 			corrected_activity_id,
 			corrected_visitor_id,
 			record.booking_period_start_epoch,
 			record.booking_time_epoch,
-			record.attendees
+			record.attendees,
+			zipcode_from,
+			zipcode_to,
+			activity_type
 		);
 		
 	end loop;
