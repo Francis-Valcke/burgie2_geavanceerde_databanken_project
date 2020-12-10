@@ -7,10 +7,11 @@ declare
 begin
 	return 
 		case 
-			when(score <= 1) then 1.0 
-			when(score > 1 and score <= 2) then 0.5 
-			when(score > 2 and score <= 3) then 0.1
-			else 0.0 
+			when score = 0 then 1.0
+			when score = 1 then 0.9
+			when score = 2 then 0.4
+			when score = 3 then 0.1
+			else 0
 		end;
 end;
 $$ language plpgsql;
@@ -91,18 +92,18 @@ begin
 		score_sorted as(
 			select 
 				score, 
-				row_number() over (order by score desc) as row_number
+				row_number() over (order by score desc) as index
 			from score_vector
 		), 
 		weight_sorted as (
 			select 
 				weight, 
-				row_number() over (order by weight) as row_number
+				row_number() over (order by weight) as index
 			from weight
 		)
 	select sum(score_sorted.score*weight)
 	from weight_sorted
-	join score_sorted on score_sorted.row_number = weight_sorted.row_number
+	join score_sorted on score_sorted.index = weight_sorted.index
 	into owa_score;
 
 return owa_score;
@@ -115,9 +116,9 @@ with
 	visitor_sorted as (
 		select
 			*,
-			row_number() over (order by visitor_1.birthdate, visitor_1.email_address) as row_number
-		from tourism1.visitor visitor_1
-		join tourism1.address on visitor_1.address_id = tourism1.address.address_id
+			row_number() over (order by visitor_1.birthdate, visitor_1.email_address) as index
+		from tourism2.visitor visitor_1
+		join tourism2.address on tourism2.address.address_id = visitor_1.address_id
 	)
 select *
 from (
@@ -160,8 +161,8 @@ from (
 	from visitor_sorted visitor_1
 		cross join visitor_sorted visitor_2
 	where 
-		visitor_1.row_number < visitor_2.row_number 
-		and abs(visitor_1.row_number - visitor_2.row_number) < 8
+		visitor_1.index < visitor_2.index 
+		and abs(visitor_1.index - visitor_2.index) < 7
 ) as comparison
-where owa_score > 0.016
+where owa_score > 0.015
 order by owa_score
