@@ -115,7 +115,6 @@ $$ language plpgsql;
 
 
 
-
 do $$
 declare
 
@@ -132,15 +131,16 @@ declare
 begin
 	
 	set client_min_messages = error;
-	create table if not exists duplicates as (
+	drop table if exists public.duplicates;
+	create table if not exists public.duplicates as (
 		-- Actual code for selecting the duplicates
 		with 
 			visitor_sorted as (
 				select
 					*,
 					row_number() over (order by visitor_1.birthdate, visitor_1.email_address) as index
-				from tourism2.visitor visitor_1
-				join tourism2.address on tourism2.address.address_id = visitor_1.address_id
+				from tourism1.visitor visitor_1
+				join tourism1.address on tourism1.address.address_id = visitor_1.address_id
 			)
 		select *
 		from (
@@ -196,6 +196,7 @@ begin
 	set search_path to tourism1;
 
 	-- create temporary table if not exists translation_table on commit drop as (
+	drop table if exists public.translation_table;
 	create table if not exists public.translation_table as (
 		with duplicates_reservation_time as (
 			select distinct
